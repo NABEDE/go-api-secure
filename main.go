@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 )
 
-// Définir une structure pour les données
+// Structure pour représenter un message
 type Message struct {
 	ID      int    `json:"id"`
 	Content string `json:"content"`
@@ -17,8 +18,12 @@ var messages = []Message{
 	{ID: 2, Content: "Welcome to the Go API."},
 }
 
+var mu sync.Mutex
+
 // Handler pour obtenir tous les messages
 func getMessages(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
 }
@@ -28,5 +33,7 @@ func main() {
 	http.HandleFunc("/messages", getMessages)
 
 	// Démarrer le serveur
-	http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		panic(err)
+	}
 }
